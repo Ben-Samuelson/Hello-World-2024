@@ -1,118 +1,125 @@
-import discord
 import datetime
-from discord.ext import commands
-import os
+import interactions
+from interactions import slash_command, SlashContext, listen, slash_option, OptionType
 
-intents = discord.Intents.default()
-intents.message_content = True
-client = discord.Client(intents=intents)
-tree = commands.CommandTree(client)
-client.tree = tree
-
-
-#TOKEN = os.getenv("TOKEN")
-#print(TOKEN)
 TOKEN = "MTI5OTc4NTA1OTM1MTQwMDU3MA.GVBOny.lvWoL-xR-Wq9lYAz_wEp8q-PTeCRKgKTRkZC0c"
+SERVER_ID = 1299784563018563714
 
-
-COMMAND_CHARACTER = '/'
 NUMBER_OF_MESSAGES = 100    # max 101
 
-HELP_MESSAGE = """
-help: explains the commands\n
-hello: responds with hello\n
-getMood [date]: gives the mood around the given date\n
-        gets current mood if no date is given\n
-getUserMood [user] [date]: gives the mood of a specific user around the given date\n
-        gets the sender's mood if no user is specified\n
-        gets current mood if no date is given\n 
-\ndate is in the format YYYY-MM-DD\n
+HELP_DESCRIPTION = "Explains the commands"
+HELLO_DESCRIPTION = "Responds with hello"
+GET_MOOD_DESCRIPTION = "Gives the mood around the given date"
+GET_USER_MOOD_DESCRIPTION = "Gives the mood of a specific user"
+DATE_DESCRIPTION = "The date to check - current date is used if none is given - YYYY-MM-DD format"
+USER_DESCRIPTION = "The user to check - you are used if no user is given"
+
+HELP_MESSAGE = f"""
+help: {HELP_DESCRIPTION}\n
+hello: {HELLO_DESCRIPTION}\n
+get_mood [date]: {GET_MOOD_DESCRIPTION}\n
+get_user_mood [date] [user]: {GET_USER_MOOD_DESCRIPTION}\n
+\n
+[date]: {DATE_DESCRIPTION}\n
+[user]: {USER_DESCRIPTION}\n
 """
 
-@tree.command(name = "test", description = "testing")
-async def self(interaction: discord.Interaction, name: str):
-    await interaction.response.send_message()
+
+bot = interactions.Client(token=TOKEN)
 
 
-@client.event
+@listen()
 async def on_ready():
-    print(f'logged in as {client.user}')
-    await tree.sync()
+    print(f"logged in as {bot.user}")
 
-@client.event
-async def on_message(message):
+@slash_command(
+    name="help",
+    description=HELP_DESCRIPTION,
+    scopes=[SERVER_ID]
+)
+async def help(ctx: SlashContext):
+    await ctx.send(HELP_MESSAGE)
 
-    if message.author == client.user or not message.content.startswith(COMMAND_CHARACTER):
-        return
+@slash_command(
+    name="hello",
+    description=HELLO_DESCRIPTION,
+    scopes=[SERVER_ID]
+)
+async def hello(ctx: SlashContext):
+    await ctx.send("Hello!")
 
-    command = message.content[1:].split(" ")
-    channel = message.channel
 
-    if command[0] == "help":
-        await channel.send(HELP_MESSAGE)
+@slash_command(
+    name="get_mood",
+    description=GET_MOOD_DESCRIPTION,
+    scopes=[SERVER_ID]
+)
+@slash_option(
+    name="date_input",
+    description=DATE_DESCRIPTION,
+    required=False,
+    opt_type=OptionType.STRING
+)
+async def get_mood(ctx: SlashContext, date_input: str = "today"):
 
-    if command[0] == "hello":
-        await channel.send("Hello!")
-
-    elif command[0] == "getMood":
-        await getMood(command,message.channel)
-
-    elif command[0] == "getUserMood":
-        await getUserMood(command,message.channel, message)
-
+    if date_input == "today":
+        date = datetime.date.today()
     else:
-        await channel.send("Unknown command - use /help to see available commands")
-
-
-async def getMood(command, channel):
-    if len(command) == 2:
         try:
-            date = datetime.datetime.fromisoformat(command[1])
+            date = datetime.datetime.fromisoformat(date_input)
         except ValueError:
-            await channel.send("Invalid date")
+            await ctx.send("Invalid date")
             return
-    else:
-        date = datetime.datetime.today()
 
-    messages = [message async for message in channel.history(limit=NUMBER_OF_MESSAGES,
-                                                                 around=date)]
-    await channel.send(f"{date}")
-
-async def getUserMood(command, channel, message):
-    userMention = message.author.mention
-    date = datetime.datetime.today()
-
-    match len(command):
-        case 2:
-            if isUserMention(command[1]):
-                userMention = command[1]
-            else:
-                try:
-                    date = datetime.datetime.fromisoformat(command[1])
-                except ValueError:
-                    await channel.send("Invalid date")
-                    return
-
-        case 3:
-            userMention = command[1]
-            try:
-                date = datetime.datetime.fromisoformat(command[2])
-            except ValueError:
-                await channel.send("Invalid date")
-                return
-
-    messages = [message async for message in channel.history(limit=NUMBER_OF_MESSAGES,
+    messages = [message async for message in ctx.channel.history(limit=NUMBER_OF_MESSAGES,
                                                              around=date)]
 
-    userMessages = []
+    await ctx.send(f"{date}")
+
+
+@slash_command(
+    name="get_user_mood",
+    description=GET_USER_MOOD_DESCRIPTION,
+    scopes=[SERVER_ID]
+)
+@slash_option(
+    name="date_input",
+    description=DATE_DESCRIPTION,
+    required=False,
+    opt_type=OptionType.STRING
+)
+@slash_option(
+    name="user_input",
+    description=USER_DESCRIPTION,
+    required=False,
+    opt_type=OptionType.STRING
+)
+async def get_user_mood(ctx: SlashContext, date_input: str = "today", user_input: str = "self"):
+
+    if date_input == "today":
+        date = datetime.date.today()
+    else:
+        try:
+            date = datetime.datetime.fromisoformat(date_input)
+        except ValueError:
+            await ctx.send("Invalid date")
+            return
+
+    if user_input == "self":
+        user = ctx.author.mention
+    else:
+        user = user_input
+
+    messages = [message async for message in ctx.channel.history(limit=NUMBER_OF_MESSAGES,
+                                                                 around=date)]
+
+    user_messages = []
     for n in range(len(messages)):
-        if messages[n].author.mention == userMention:
-            userMessages.append(messages[n])
+        if messages[n].author.mention == user:
+            user_messages.append(messages[n])
 
-    await channel.send(f"{userMention}, {date}")
+    await ctx.send(f"{date}, {user}")
 
-def isUserMention(str):
-    return str.startswith("<@") and str.endswith(">")
 
 if __name__ == '__main__':
-    client.run(TOKEN)
+    bot.start(TOKEN)
