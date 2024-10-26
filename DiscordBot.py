@@ -10,6 +10,7 @@ client = discord.Client(intents=intents)
 
 COMMAND_CHARACTER = '/'
 NUMBER_OF_MESSAGES = 100    # max 101
+TOKEN = "MTI5OTc4NTA1OTM1MTQwMDU3MA.G7pFsB.T6-la9_egMyAefk9Ecq5h3TM7dqwu5hbAYJVhU"
 
 HELP_MESSAGE = """
 help: explains the commands\n
