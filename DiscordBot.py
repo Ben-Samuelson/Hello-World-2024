@@ -1,12 +1,19 @@
-from operator import truediv
-
 import discord
 import datetime
+from discord import app_commands
+import os
 
 intents = discord.Intents.default()
 intents.message_content = True
-
 client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
+client.tree = tree
+
+
+#TOKEN = os.getenv("TOKEN")
+#print(TOKEN)
+TOKEN = "MTI5OTc4NTA1OTM1MTQwMDU3MA.GVBOny.lvWoL-xR-Wq9lYAz_wEp8q-PTeCRKgKTRkZC0c"
+
 
 COMMAND_CHARACTER = '/'
 NUMBER_OF_MESSAGES = 100    # max 101
@@ -25,6 +32,21 @@ getUserMood [user] [date]: gives the mood of a specific user around the given da
 @client.event
 async def on_ready():
     print(f'logged in as {client.user}')
+    await tree.sync()
+
+@client.tree.command()
+async def echo(interaction: discord.Interaction, message: str) -> None:
+    """
+    Echoes a message.
+
+    Parameters
+    ----------
+    interaction : discord.Interaction
+        The interaction object.
+    message : str
+        The message to echo.
+    """
+    await interaction.response.send_message(message)
 
 @client.event
 async def on_message(message):
@@ -37,9 +59,6 @@ async def on_message(message):
 
     if command[0] == "help":
         await channel.send(HELP_MESSAGE)
-
-    elif command[0] == "hello":
-        await channel.send("Hello!")
 
     elif command[0] == "getMood":
         await getMood(command,message.channel)
@@ -90,14 +109,16 @@ async def getUserMood(command, channel, message):
 
     messages = [message async for message in channel.history(limit=NUMBER_OF_MESSAGES,
                                                              around=date)]
-    for n in range(len(messages)):
-        if not messages[n].author.mention == userMention:
-            messages.pop(n)
 
-    await channel.send(f"{date}, {userMention}")
+    userMessages = []
+    for n in range(len(messages)):
+        if messages[n].author.mention == userMention:
+            userMessages.append(messages[n])
+
+    await channel.send(f"{userMention}, {date}")
 
 def isUserMention(str):
-    return str.startswith('@')
+    return str.startswith("<@") and str.endswith(">")
 
 if __name__ == '__main__':
     client.run(TOKEN)
