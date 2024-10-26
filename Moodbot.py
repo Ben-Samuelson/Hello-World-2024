@@ -1,12 +1,19 @@
-happyEmojis = ["🙂","😃","😀","😄","😆","😸","😺","😊","😂","🤣"
-               ,"😁"]
+happyEmojis = ["🙂","😃","😀","😄","😆","😸","😺","😊","😂","🤣","😁"]
 sadEmojis = ["😢", "😞","😔","😟" ,"😣","😩","😭","😿","😓","😥","🥺","😥","😖","😫"]
 angryEmojis= ["😡","💢", "🔥","😤", "😾"]
 disgustEmojis = ["😖", "🤢","🤮","😷","🤧"]
 fearEmojis= ["😨", "😱", "😰", "😥", "😧", "😬"]
 excitementEmojis = ["🥳", "🎊", "🌟", "✨","🎈","🎉","😁","🤩"]
+loveEmojis = ["❤","🧡","🤍","💛","💚", "💙" ,"💜" "🖤"]
 
 
+serverEvaluation = True
+
+
+emojiBoard = {"happy": happyEmojis, "disgusted": disgustEmojis,
+                "sad": sadEmojis,"anxious": fearEmojis,
+                "angry": angryEmojis, "excited": excitementEmojis,
+              "in love": loveEmojis}
 
 exampleMessages = ["Hey! 🎉 How's your day going? 🌞",
             "Just finished my workout! 💪😅 Now time for a smoothie! 🥤",
@@ -34,19 +41,27 @@ angerCounter = 0
 disgustCounter = 0
 fearCounter = 0
 excitementCounter = 0
-emojiBoard = {"Happiness": happyEmojis, "disgust": disgustEmojis,
-                "Sadness": sadEmojis,"Fear": fearEmojis,
-                "Anger": angryEmojis, "Excitement": excitementEmojis}
-counterBoard = {"Happiness": happyCounter, "disgust": disgustCounter,
-                "Sadness": sadCounter,"Fear": fearCounter,
-                "Anger": angerCounter, "Excitement": excitementCounter}
+loveCounter = 0
 
-for message in exampleMessages:
+counterBoard = {"happy": happyCounter, "disgusted": disgustCounter,
+                "sad": sadCounter,"anxious": fearCounter,
+                "angry": angerCounter, "excited": excitementCounter,
+                "in love":loveCounter}
+
+for message in messages2:
     for emotion in emojiBoard:
         for emoji in emojiBoard[emotion]:
             if message.find(emoji) != -1:
                 counterBoard[emotion] += 1
 
 
-print(counterBoard)
+maxValue = 0
+leadingEmotion = ""
+for emotion in counterBoard:
+    if counterBoard[emotion] > maxValue:
+        leadingEmotion = emotion
+        maxValue = counterBoard[emotion]
+
+if serverEvaluation:
+    print(f"The server is feeling: {leadingEmotion}!")
 
