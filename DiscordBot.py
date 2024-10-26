@@ -1,24 +1,25 @@
 import datetime
 import interactions
-from interactions import slash_command, SlashContext, listen, slash_option, OptionType
+from interactions import slash_command, SlashContext, listen, slash_option, OptionType, Snowflake
+from raven.contrib.django.models import client
 
-TOKEN = "MTI5OTc4NTA1OTM1MTQwMDU3MA.GVBOny.lvWoL-xR-Wq9lYAz_wEp8q-PTeCRKgKTRkZC0c"
+
 SERVER_ID = 1299784563018563714
 
 NUMBER_OF_MESSAGES = 100    # max 101
 
 HELP_DESCRIPTION = "Explains the commands"
 HELLO_DESCRIPTION = "Responds with hello"
-GET_MOOD_DESCRIPTION = "Gives the mood around the given date"
-GET_USER_MOOD_DESCRIPTION = "Gives the mood of a specific user"
+SERVER_MOOD_DESCRIPTION = "Gives the mood around the given date"
+USER_MOOD_DESCRIPTION = "Gives the mood of a specific user"
 DATE_DESCRIPTION = "The date to check - current date is used if none is given - YYYY-MM-DD format"
 USER_DESCRIPTION = "The user to check - you are used if no user is given"
 
 HELP_MESSAGE = f"""
 help: {HELP_DESCRIPTION}\n
 hello: {HELLO_DESCRIPTION}\n
-get_mood [date]: {GET_MOOD_DESCRIPTION}\n
-get_user_mood [date] [user]: {GET_USER_MOOD_DESCRIPTION}\n
+server_mood [date]: {SERVER_MOOD_DESCRIPTION}\n
+user_mood [date] [user]: {USER_MOOD_DESCRIPTION}\n
 \n
 [date]: {DATE_DESCRIPTION}\n
 [user]: {USER_DESCRIPTION}\n
@@ -50,8 +51,8 @@ async def hello(ctx: SlashContext):
 
 
 @slash_command(
-    name="get_mood",
-    description=GET_MOOD_DESCRIPTION,
+    name="server_mood",
+    description=SERVER_MOOD_DESCRIPTION,
     scopes=[SERVER_ID]
 )
 @slash_option(
@@ -60,13 +61,13 @@ async def hello(ctx: SlashContext):
     required=False,
     opt_type=OptionType.STRING
 )
-async def get_mood(ctx: SlashContext, date_input: str = "today"):
+async def server_mood(ctx: SlashContext, date_input: str = "today"):
 
     if date_input == "today":
-        date = datetime.date.today()
+        date = Snowflake.from_datetime(datetime.datetime.today())
     else:
         try:
-            date = datetime.datetime.fromisoformat(date_input)
+            date = Snowflake.from_datetime(datetime.datetime.fromisoformat(date_input))
         except ValueError:
             await ctx.send("Invalid date")
             return
@@ -74,12 +75,17 @@ async def get_mood(ctx: SlashContext, date_input: str = "today"):
     messages = [message async for message in ctx.channel.history(limit=NUMBER_OF_MESSAGES,
                                                              around=date)]
 
-    await ctx.send(f"{date}")
+    user_messages = []
+    for message in messages:
+        if message.author == client:
+            user_messages.append(message.content)
+
+    await ctx.send(f"{user_messages}")
 
 
 @slash_command(
-    name="get_user_mood",
-    description=GET_USER_MOOD_DESCRIPTION,
+    name="user_mood",
+    description=USER_MOOD_DESCRIPTION,
     scopes=[SERVER_ID]
 )
 @slash_option(
@@ -94,13 +100,13 @@ async def get_mood(ctx: SlashContext, date_input: str = "today"):
     required=False,
     opt_type=OptionType.STRING
 )
-async def get_user_mood(ctx: SlashContext, date_input: str = "today", user_input: str = "self"):
+async def user_mood(ctx: SlashContext, date_input: str = "today", user_input: str = "self"):
 
     if date_input == "today":
-        date = datetime.date.today()
+        date = Snowflake.from_datetime(datetime.datetime.today())
     else:
         try:
-            date = datetime.datetime.fromisoformat(date_input)
+            date = Snowflake.from_datetime(datetime.datetime.fromisoformat(date_input))
         except ValueError:
             await ctx.send("Invalid date")
             return
@@ -112,13 +118,12 @@ async def get_user_mood(ctx: SlashContext, date_input: str = "today", user_input
 
     messages = [message async for message in ctx.channel.history(limit=NUMBER_OF_MESSAGES,
                                                                  around=date)]
-
     user_messages = []
-    for n in range(len(messages)):
-        if messages[n].author.mention == user:
-            user_messages.append(messages[n])
+    for message in messages:
+        if message.author.mention == user:
+            user_messages.append(message.content)
 
-    await ctx.send(f"{date}, {user}")
+    await ctx.send(f"{user_messages}")
 
 
 if __name__ == '__main__':
