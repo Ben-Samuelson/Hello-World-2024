@@ -1,12 +1,12 @@
 import discord
 import datetime
-from discord import app_commands
+from discord.ext import commands
 import os
 
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
+tree = commands.CommandTree(client)
 client.tree = tree
 
 
@@ -29,24 +29,15 @@ getUserMood [user] [date]: gives the mood of a specific user around the given da
 \ndate is in the format YYYY-MM-DD\n
 """
 
+@tree.command(name = "test", description = "testing")
+async def self(interaction: discord.Interaction, name: str):
+    await interaction.response.send_message()
+
+
 @client.event
 async def on_ready():
     print(f'logged in as {client.user}')
     await tree.sync()
-
-@client.tree.command()
-async def echo(interaction: discord.Interaction, message: str) -> None:
-    """
-    Echoes a message.
-
-    Parameters
-    ----------
-    interaction : discord.Interaction
-        The interaction object.
-    message : str
-        The message to echo.
-    """
-    await interaction.response.send_message(message)
 
 @client.event
 async def on_message(message):
@@ -59,6 +50,9 @@ async def on_message(message):
 
     if command[0] == "help":
         await channel.send(HELP_MESSAGE)
+
+    if command[0] == "hello":
+        await channel.send("Hello!")
 
     elif command[0] == "getMood":
         await getMood(command,message.channel)
