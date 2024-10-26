@@ -3,7 +3,7 @@ import interactions
 from interactions import slash_command, SlashContext, listen, slash_option, OptionType, Snowflake
 from raven.contrib.django.models import client
 
-
+TOKEN = "MTI5OTc4NTA1OTM1MTQwMDU3MA.GVBOny.lvWoL-xR-Wq9lYAz_wEp8q-PTeCRKgKTRkZC0c"
 SERVER_ID = 1299784563018563714
 
 NUMBER_OF_MESSAGES = 100    # max 101
