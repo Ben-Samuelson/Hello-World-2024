@@ -1,4 +1,5 @@
-from operator import truediv
+import os
+from dotenv import load_dotenv
 
 import discord
 import datetime
@@ -8,8 +9,8 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-COMMAND_CHARACTER = '/'
-NUMBER_OF_MESSAGES = 100    # max 101
+COMMAND_CHARACTER = "/"
+NUMBER_OF_MESSAGES = 100  # max 101
 
 HELP_MESSAGE = """
 help: explains the commands\n
@@ -22,9 +23,11 @@ getUserMood [user] [date]: gives the mood of a specific user around the given da
 \ndate is in the format YYYY-MM-DD\n
 """
 
+
 @client.event
 async def on_ready():
-    print(f'logged in as {client.user}')
+    print(f"logged in as {client.user}")
+
 
 @client.event
 async def on_message(message):
@@ -42,10 +45,10 @@ async def on_message(message):
         await channel.send("Hello!")
 
     elif command[0] == "getMood":
-        await getMood(command,message.channel)
+        await getMood(command, message.channel)
 
     elif command[0] == "getUserMood":
-        await getUserMood(command,message.channel, message)
+        await getUserMood(command, message.channel, message)
 
     else:
         await channel.send("Unknown command - use /help to see available commands")
@@ -61,9 +64,9 @@ async def getMood(command, channel):
     else:
         date = datetime.datetime.today()
 
-    messages = [message async for message in channel.history(limit=NUMBER_OF_MESSAGES,
-                                                                 around=date)]
+    messages = [message async for message in channel.history(limit=NUMBER_OF_MESSAGES, around=date)]
     await channel.send(f"{date}")
+
 
 async def getUserMood(command, channel, message):
     userMention = message.author.mention
@@ -88,16 +91,19 @@ async def getUserMood(command, channel, message):
                 await channel.send("Invalid date")
                 return
 
-    messages = [message async for message in channel.history(limit=NUMBER_OF_MESSAGES,
-                                                             around=date)]
+    messages = [message async for message in channel.history(limit=NUMBER_OF_MESSAGES, around=date)]
     for n in range(len(messages)):
         if not messages[n].author.mention == userMention:
             messages.pop(n)
 
     await channel.send(f"{date}, {userMention}")
 
-def isUserMention(str):
-    return str.startswith('@')
 
-if __name__ == '__main__':
-    client.run(TOKEN)
+def isUserMention(str):
+    return str.startswith("@")
+
+
+if __name__ == "__main__":
+    load_dotenv()
+    token = str(os.getenv("TOKEN"))
+    client.run(token)
