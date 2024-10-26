@@ -11,7 +11,6 @@ client = discord.Client(intents=intents)
 COMMAND_CHARACTER = '/'
 NUMBER_OF_MESSAGES = 100    # max 101
 
-
 HELP_MESSAGE = """
 help: explains the commands\n
 hello: responds with hello\n
